@@ -1,23 +1,9 @@
-// node-graphql/src/database.js
+//* node-graphql/src/database.js
 
-const sets = [
-    // {
-    //   id: 1,
-    //   members: new Set([1, 2, 3]),
-    // },
-    // {
-    //   id: 2,
-    //   members: new Set([1, 2, 3]),
-    // },
-    // {
-    //   id: 3,
-    //   members: new Set([1, 2, 3]),
-    // },
-  ];
+const { PrismaClient } = require('@prisma/client')
 
-const membersToSets = {}; // {element: [set]}
+const prisma = new PrismaClient();
 
 module.exports = {
-	sets,
-	membersToSets,
+  prisma,
 }

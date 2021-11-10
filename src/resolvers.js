@@ -1,6 +1,6 @@
 // node-graphql/src/resolvers.js
 
-const { sets, membersToSets } =  require('./database.js');
+const { prisma } =  require('./database.js');
 
 const resolvers = {
   Set: {
@@ -10,9 +10,7 @@ const resolvers = {
   },
 
   Query: {
-    sets: (parent, args) => {
-      return sets;
-    },
+    sets: (parent, args) => prisma.set.findMany(),
   },
 
   Mutation: {
@@ -23,31 +21,53 @@ const resolvers = {
 function intersectingSets(parent) {
   const idsToReturn = new Set();
   const setsToReturn = [];
+
   const {id: thisID, members: theseMembers} = parent;
-  for (const member of theseMembers.values()) {
-    for (const candidateSet of membersToSets[member]) {
-      if (candidateSet.id === thisID || idsToReturn.has(candidateSet.id)) {
-        continue;
+
+  const memberships = prisma.membership.findMany({
+    // id not this id AND member in theseMembers
+    where: {
+      containiningSetID: {
+        not: thisID
+      },
+      member: {
+        in: theseMembers,
       }
-      idsToReturn.add(candidateSet.id);
-      setsToReturn.push(candidateSet);
     }
-  }
+  });
+
+  console.log(memberships);
+
+  // const {id: thisID, members: theseMembers} = parent;
+  // for (const member of theseMembers.values()) {
+  //   for (const candidateSet of membersToSets[member]) {
+  //     if (candidateSet.id === thisID || idsToReturn.has(candidateSet.id)) {
+  //       continue;
+  //     }
+  //     idsToReturn.add(candidateSet.id);
+  //     setsToReturn.push(candidateSet);
+  //   }
+  // }
   return setsToReturn;
 }
 
 function createSet (parent, args) {
-  const newSet  = {
-    id: sets.length + 1,
-    members: new Set(args.input.members),
-  };
-  sets.push(newSet);
-  for (const member of newSet.members.values()) {
-    if (!membersToSets.hasOwnProperty(member)) {
-      membersToSets[member] = [];
+
+  const membersSet = new Set(args.input.members);
+
+  const newSet = prisma.set.create({
+    data: {
+      members: Array.from(membersSet),
     }
-    membersToSets[member].push(newSet);
+  });
+
+  for (const member of membersSet.values()) {
+    prisma.membership.create({
+      member,
+      containingSetID: newSet.id,
+    });
   }
+
   return newSet;
 }
 
