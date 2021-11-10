@@ -4,6 +4,7 @@ const { gql } = require('apollo-server')
 
 const typeDefs = gql`
   type Set {
+    id: ID!
     members: [Int!]!
     intersectingSets: [Set!]!
   }
